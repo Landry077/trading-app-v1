@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trading App V1</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .header {
+      margin-bottom: 18px;
+    }
+    .sub {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .toolbar, .cards, .panel {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #6b7280;
+    }
+    select, button {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      background: white;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      border: 1px solid #edf2f7;
+      border-radius: 14px;
+      padding: 14px;
+      background: #fafafa;
+    }
+    .card small {
+      display: block;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    .card strong {
+      font-size: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 12px;
+      text-align: center;
+    }
+    th:first-child, td:first-child {
+      text-align: left;
+      font-weight: bold;
+      width: 100px;
+    }
+    .grid-two {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 18px;
+    }
+    .muted {
+      color: #6b7280;
+      font-size: 13px;
+    }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      background: #eef2ff;
+      margin-right: 6px;
+    }
+    .logs {
+      max-height: 220px;
+      overflow-y: auto;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+    .ok {
+      color: green;
+      font-weight: bold;
+    }
+    .ko {
+      color: #b91c1c;
+      font-weight: bold;
+    }
+    @media (max-width: 900px) {
+      .grid-two {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Trading App V1</h1>
+      <div class="sub">Les données sont récoltées en temps réel et sauvegardées en utilisant le bouton Synchroniser.</div>
+      <div class="sub">Les paires utilisées dans ce code se terminent par "m", merci de vérifier.</div>
+      <div class="sub">Merci de fonctionner sous cette procedure.</div>
+    </div>
+
+    <div class="toolbar">
+      <div>
+        <label for="symbolSelect">Symbole</label>
+        <select id="symbolSelect"></select>
+      </div>
+
+      <div>
+        <label for="timeframeSelect">Timeframe</label>
+        <select id="timeframeSelect"></select>
+      </div>
+
+      <div>
+        <label for="limitSelect">Nombre de bougies</label>
+        <select id="limitSelect">
+          <option value="4">4</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+          <option value="10">10</option>
+          <option value="12">12</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="autoRefreshSelect">Auto-refresh</label>
+        <select id="autoRefreshSelect">
+          <option value="on">ON</option>
+          <option value="off">OFF</option>
+        </select>
+      </div>
+
+      <div>
+        <label>&nbsp;</label>
+        <button id="refreshBtn">Actualiser maintenant</button>
+      </div>
+
+      <div>
+        <label>&nbsp;</label>
+        <button id="syncBtn">Synchroniser MT5</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <small>Mode</small>
+        <strong id="modeCard">-</strong>
+      </div>
+      <div class="card">
+        <small>High du jour</small>
+        <strong id="dailyHigh">-</strong>
+      </div>
+      <div class="card">
+        <small>Low du jour</small>
+        <strong id="dailyLow">-</strong>
+      </div>
+      <div class="card">
+        <small>Dernier High</small>
+        <strong id="latestHigh">-</strong>
+      </div>
+      <div class="card">
+        <small>Dernier Low</small>
+        <strong id="latestLow">-</strong>
+      </div>
+    </div>
+
+    <div class="grid-two">
+      <div>
+        <div class="panel">
+          <h3>Tableau High / Low</h3>
+          <div class="muted">Cette section se met à jour seule selon ton choix de symbole, timeframe et nombre de bougies.</div>
+          <table id="hlTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>Journal des synchronisations</h3>
+          <div id="logsBox" class="logs">Chargement...</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h3>État de l'application</h3>
+          <div id="healthBox">Chargement...</div>
+        </div>
+
+        <div class="panel">
+          <h3>Dernière bougie</h3>
+          <div id="latestBarBox">Chargement...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = "";
+    let timer = null;
+
+    const state = {
+      symbol: "",
+      timeframe: "",
+      limit: 4,
+      autoRefresh: "on",
+      autoRefreshSeconds: 20
+    };
+
+    async function getJson(url, options = {}) {
+      const res = await fetch(url, options);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || "Erreur API");
+      }
+      return data;
+    }
+
+    async function loadHealth() {
+      const data = await getJson(`${API}/api/health`);
+      state.autoRefreshSeconds = data.auto_refresh_seconds || 20;
+      document.getElementById("modeCard").textContent = data.mode;
+      document.getElementById("healthBox").innerHTML = `
+        <div><span class="pill">Mode</span> ${data.mode}</div>
+        <div><span class="pill">DB</span> ${data.db_ok ? '<span class="ok">OK</span>' : '<span class="ko">Erreur</span>'}</div>
+        <div><span class="pill">MT5 activé</span> ${data.mt5_enabled ? 'Oui' : 'Non'}</div>
+        <div><span class="pill">Auto-refresh</span> ${data.auto_refresh_seconds} sec</div>
+        <div><span class="pill">Terminal</span> ${data.terminal ? JSON.stringify(data.terminal) : 'Non disponible'}</div>
+      `;
+    }
+
+    async function loadSymbols() {
+      const data = await getJson(`${API}/api/symbols`);
+      const select = document.getElementById("symbolSelect");
+      select.innerHTML = data.symbols.map(v => `<option value="${v}">${v}</option>`).join("");
+      if (!state.symbol && data.symbols.length) {
+        state.symbol = data.symbols[0];
+      }
+      select.value = state.symbol;
+    }
+
+    async function loadTimeframes() {
+      const data = await getJson(`${API}/api/timeframes`);
+      const select = document.getElementById("timeframeSelect");
+      select.innerHTML = data.timeframes.map(v => `<option value="${v}">${v}</option>`).join("");
+      if (!state.timeframe && data.timeframes.length) {
+        state.timeframe = data.timeframes[0];
+      }
+      select.value = state.timeframe;
+    }
+
+    async function loadHighLow() {
+      const data = await getJson(`${API}/api/high-low?symbol=${encodeURIComponent(state.symbol)}&timeframe=${encodeURIComponent(state.timeframe)}&limit=${state.limit}`);
+      const thead = document.querySelector("#hlTable thead");
+      const tbody = document.querySelector("#hlTable tbody");
+
+      thead.innerHTML = `
+        <tr>
+          <th></th>
+          ${data.times.map((_, i) => `<th>Bougie ${i + 1}</th>`).join("")}
+        </tr>
+      `;
+
+      tbody.innerHTML = `
+        <tr>
+          <td>High</td>
+          ${data.high.map(v => `<td>${v}</td>`).join("")}
+        </tr>
+        <tr>
+          <td>Low</td>
+          ${data.low.map(v => `<td>${v}</td>`).join("")}
+        </tr>
+      `;
+    }
+
+    async function loadLatestBar() {
+      const data = await getJson(`${API}/api/latest-bar?symbol=${encodeURIComponent(state.symbol)}&timeframe=${encodeURIComponent(state.timeframe)}`);
+      const box = document.getElementById("latestBarBox");
+
+      if (data.message) {
+        box.textContent = data.message;
+        return;
+      }
+
+      document.getElementById("latestHigh").textContent = data.high;
+      document.getElementById("latestLow").textContent = data.low;
+
+      box.innerHTML = `
+        <div><span class="pill">Symbole</span> ${data.symbol}</div>
+        <div><span class="pill">Timeframe</span> ${data.timeframe}</div>
+        <div><span class="pill">Heure</span> ${data.bar_time}</div>
+        <div><span class="pill">Open</span> ${data.open}</div>
+        <div><span class="pill">High</span> ${data.high}</div>
+        <div><span class="pill">Low</span> ${data.low}</div>
+        <div><span class="pill">Close</span> ${data.close}</div>
+      `;
+    }
+
+    async function loadDailyHighLow() {
+      const data = await getJson(`${API}/api/daily-high-low?symbol=${encodeURIComponent(state.symbol)}&timeframe=${encodeURIComponent(state.timeframe)}`);
+      document.getElementById("dailyHigh").textContent = data.daily_high ?? "-";
+      document.getElementById("dailyLow").textContent = data.daily_low ?? "-";
+    }
+
+    async function loadLogs() {
+      const data = await getJson(`${API}/api/sync-logs`);
+      const box = document.getElementById("logsBox");
+      if (!data.logs.length) {
+        box.textContent = "Aucun log";
+        return;
+      }
+
+      box.innerHTML = data.logs.map(log => `
+        <div>
+          <strong>${log.created_at}</strong> |
+          ${log.symbol} ${log.timeframe} |
+          demandées ${log.bars_requested} |
+          sauvées ${log.bars_saved} |
+          <span class="${log.status === "SUCCESS" ? "ok" : (log.status === "ERROR" ? "ko" : "")}">${log.status}</span>
+          ${log.message ? `| ${log.message}` : ""}
+        </div>
+      `).join("");
+    }
+
+    async function syncNow() {
+      const payload = {
+        symbol: state.symbol,
+        timeframe: state.timeframe,
+        bars: 150
+      };
+
+      try {
+        const data = await getJson(`${API}/api/sync`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        alert(data.message);
+        await loadLogs();
+        await loadHighLow();
+        await loadLatestBar();
+        await loadDailyHighLow();
+      } catch (err) {
+        alert(err.message);
+        await loadLogs();
+      }
+    }
+
+    async function refreshMarketSections() {
+      await loadHighLow();
+      await loadLatestBar();
+      await loadDailyHighLow();
+    }
+
+    async function refreshAll() {
+      await loadHealth();
+      await refreshMarketSections();
+      await loadLogs();
+    }
+
+    function restartAutoRefresh() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+      if (state.autoRefresh === "on") {
+        timer = setInterval(async () => {
+          try {
+            await refreshMarketSections();
+            await loadLogs();
+          } catch (err) {
+            console.error(err);
+          }
+        }, state.autoRefreshSeconds * 1000);
+      }
+    }
+
+    function wireEvents() {
+      document.getElementById("symbolSelect").addEventListener("change", async (e) => {
+        state.symbol = e.target.value;
+        await refreshMarketSections();
+      });
+
+      document.getElementById("timeframeSelect").addEventListener("change", async (e) => {
+        state.timeframe = e.target.value;
+        await refreshMarketSections();
+      });
+
+      document.getElementById("limitSelect").addEventListener("change", async (e) => {
+        state.limit = Number(e.target.value);
+        await loadHighLow();
+      });
+
+      document.getElementById("autoRefreshSelect").addEventListener("change", (e) => {
+        state.autoRefresh = e.target.value;
+        restartAutoRefresh();
+      });
+
+      document.getElementById("refreshBtn").addEventListener("click", refreshAll);
+      document.getElementById("syncBtn").addEventListener("click", syncNow);
+    }
+
+    async function init() {
+      try {
+        await loadHealth();
+        await loadSymbols();
+        await loadTimeframes();
+
+        state.symbol = document.getElementById("symbolSelect").value;
+        state.timeframe = document.getElementById("timeframeSelect").value;
+        state.limit = Number(document.getElementById("limitSelect").value);
+        state.autoRefresh = document.getElementById("autoRefreshSelect").value;
+
+        wireEvents();
+        await refreshMarketSections();
+        await loadLogs();
+        restartAutoRefresh();
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
