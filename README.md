@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Trading App V3
 
 Cette version 3 est pensée pour tourner **facilement sur ton ordinateur**.
@@ -150,3 +151,6 @@ Je peux préparer toute la structure et le code, mais je ne peux pas vérifier M
 En revanche, cette archive est pensée pour te permettre de tester rapidement :
 - d'abord le front et le backend
 - puis la connexion MT5
+=======
+# trading-app-v1
+>>>>>>> 2e6fa02b5543b697c227189b666efa53031f703a
